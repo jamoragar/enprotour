@@ -1,24 +1,159 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useState, useRef } from 'react';
+import firebase from './components/firebase/firebase';
+import { Button, Modal, Form, Col, InputGroup, Spinner } from 'react-bootstrap';
+import { rutEsValido } from './helper';
 import './App.css';
 
 function App() {
+  const [showForm, setShowForm] = useState(false);
+  const [btnText, setBtnText] = useState(false);
+
+  const handleClose = () => setShowForm(false);
+  const handleShow = () => setShowForm(true);
+
+  const input_rut_empresa = useRef(null);
+
+  const regiones = ['Aisén del G. Carlos Ibáñez del Campo',
+    'Antofagasta',
+    'Arica y Parinacota',
+    'Atacama',
+    'Biobío',
+    'Coquimbo',
+    'La Araucanía',
+    "Libertador General Bernardo O'Higgins",
+    "Los Lagos",
+    "Los Ríos",
+    "Magallanes y de la Antártica Chilena",
+    "Maule",
+    "Metropolitana de Santiago",
+    "Ñuble",
+    "Tarapacá",
+    "Valparaíso"];
+
+    const onFormSubmit = (e) => {
+      e.preventDefault();
+      setBtnText(true);
+
+      const {f_name, rut_empresa, rep_name, rep_lastname, city, region, email, number, comprador } = e.target.elements; 
+      if(!rutEsValido(rut_empresa.value)){
+        alert(`El rut: ${rut_empresa.value}, no es un rut válido. Intente nuevamente.`);
+        input_rut_empresa.current.focus();
+      }
+
+      console.log(f_name.value, rut_empresa.value, rep_name.value, rep_lastname.value, city.value, region.value, comprador.checked);
+
+      firebase.database().ref().child('Users/').push().set({
+        company_name: f_name.value,
+        company_rut: rut_empresa.value,
+        owner_name: rep_name.value,
+        owner_lname: rep_lastname.value,
+        city: city.value,
+        region: region.value,
+        email: email.value,
+        number: number.value,
+        comprador: comprador.checked
+      })
+        .then(()=>{
+          setBtnText(false);
+          handleClose();
+        })
+
+    }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+
+      <Button onClick={handleShow} variant='primary'>Registrarse</Button>
+
+      <Modal show={showForm} onHide={handleClose} size='lg'>
+        <Modal.Header closeButton>
+          <Modal.Title>Formulario de Registro</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+
+          <Form onSubmit={onFormSubmit}>
+            
+            <Form.Row>
+              <Form.Group as={Col} controlId="formGriNombreFantasia">
+                <Form.Label>Nombre Fantasia</Form.Label>
+                <Form.Control name='f_name' type="text" placeholder="Ingrese Nombre de su Empresa" />
+              </Form.Group>
+
+              <Form.Group as={Col} controlId="formGridRutEmpresa">
+                <Form.Label>Rut Empresa</Form.Label>
+                <Form.Control ref={input_rut_empresa} name='rut_empresa' type="text" placeholder="Ingrese el Rut de su Empresa" />
+              </Form.Group>
+            </Form.Row>
+
+            <Form.Group controlId="formGridNombreRepresentante">
+              <Form.Label>Nombre(s) Representante Legal</Form.Label>
+              <Form.Control name='rep_name' type='text' placeholder="Ingrese el nombre del respresentante legal" />
+            </Form.Group>
+
+            <Form.Group controlId="formGridApellidoRepresentante">
+              <Form.Label>Apellido(s) Representante Legal</Form.Label>
+              <Form.Control name='rep_lastname' type='text' placeholder="Ingrese el apellido del respresentante legal" />
+            </Form.Group>
+
+            <Form.Row>
+              <Form.Group as={Col} controlId="formGridCiudad">
+                <Form.Label>Ciudad</Form.Label>
+                <Form.Control name='city' type='text' placeholder="Ingrese su ciudad de origen."/>
+              </Form.Group>
+
+              <Form.Group as={Col} controlId="formGridRegion">
+                <Form.Label>Región</Form.Label>
+                <Form.Control name='region' as="select">
+                  {regiones.map((region, i) => {
+                    return(
+                      <option value={region} key={region + i}>{region}</option>
+                    )
+                  })}
+                </Form.Control>
+              </Form.Group>
+            </Form.Row>
+
+            <Form.Group controlId="formGridEmail">
+              <Form.Label>E-mail</Form.Label>
+              <Form.Control name='email' type='email' placeholder="Ingrese correo electrónico" />
+            </Form.Group>
+            <Form.Group controlId="formGridNumber">
+              <Form.Label>Número de contacto</Form.Label>
+              <InputGroup>
+                <InputGroup.Prepend>
+                    <InputGroup.Text>+56</InputGroup.Text>
+                </InputGroup.Prepend>
+                <Form.Control name='number'  type='text' placeholder='Ingrese su Nro. telefónico' />
+              </InputGroup>
+            </Form.Group>
+
+            <Form.Group id="formGridVendedor">
+              <Form.Check name='comprador'type="checkbox" label="Soy Comprador" />
+            </Form.Group>
+
+            <Button variant="danger" onClick={handleClose}>
+              Cerrar
+            </Button>
+            <Button style={{marginLeft:'25px'}} variant="success" type='submit'>
+            {
+              btnText ? <Spinner
+                        as="span"
+                        animation="border"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                        />
+              :
+              'Aceptar'
+            }
+            </Button>
+          </Form>
+
+        </Modal.Body>
+        <Modal.Footer>
+        </Modal.Footer>
+      </Modal>
+
     </div>
   );
 }
