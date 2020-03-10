@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import firebase from '../firebase/firebase';
+import EditProfile from './edit_profile/edit_profile';
 
 
 
 const Registered = () => {
 
     const [fbData, setFbData] = useState(false);
+    const [modalShow, setModalShow] = useState(false);
+    const [company, setCompany] = useState('');
+    const registered_companies = fbData;
+    const content = [];
+    let indexName = [];
     
      useEffect(() => {
         firebase.database().ref('Users').on('value', (snapshot) => {
@@ -13,10 +19,6 @@ const Registered = () => {
         });
 
     }, []);  
-
-    const registered_companies = fbData;
-    const content = [];
-    let indexName = [];
 
     if(!fbData){
         return(
@@ -28,7 +30,6 @@ const Registered = () => {
             content[index] = registered_companies[key]
             indexName[index] = Object.keys(registered_companies)[index];
         });
-        console.log(registered_companies);
         return(
             <div className='col-md-12 ml-sm-auto col-lg-12 px-4'>
                 <table className='table table-dark table-hover'>
@@ -36,7 +37,7 @@ const Registered = () => {
                         <tr className="bg-primary text-white">
                             <th>Nombre Empresa</th>
                             <th>Rut Empresa</th>
-                            <th>Rep. Legal</th>
+                            <th>Participante</th>
                             <th>Comprador</th>
                             <th>Ciudad</th>
                             <th>E-mail</th>
@@ -57,7 +58,7 @@ const Registered = () => {
                                     <td>{`+56 ${company.number}`}</td>
                                     <td align="center">
                                         <a href='# ' className="text-success"><i className="fa fa-fw fa-edit"></i> Agenda</a> | 
-                                        <a href='# ' className="text-primary"><i className="fa fa-fw fa-edit"></i> Editar</a> | 
+                                        <a href='#' onClick={() => {setModalShow(true); setCompany(company.id);}} className="text-primary"><i className="fa fa-fw fa-edit"></i> Editar</a> | 
                                         <a href='# ' className="text-danger"><i className="fa fa-fw fa-trash"></i> Borrar</a>
                                     </td>
                                 </tr>
@@ -65,6 +66,7 @@ const Registered = () => {
                         }
                     </tbody>
                 </table>
+                {modalShow ? <EditProfile show={modalShow} onHide={()=>setModalShow(false)} company_id={company} /> : null}
             </div>
             
         )
